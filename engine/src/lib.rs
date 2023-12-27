@@ -1,6 +1,7 @@
 //use std::error::Error;
 use actix_web::{http, middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer};
 use game::Game;
+use game::Move;
 // use crate::{HttpCode, HttpVersion};
 
 #[derive(Debug)]
@@ -11,28 +12,34 @@ pub struct Application {
 
 impl Application {
     pub fn new(fen: String) -> Self {
-        Application {
+        Application { 
             game: Game::build(fen),
             count1: 0,
         }
     }
 
-    pub async fn get_board(&mut self, _req: HttpRequest) -> String {
-        self.count1 += 1;
-        format!("Hello world board {}!", self.count1).to_owned()
+    pub fn get_board(&mut self, _req: HttpRequest) -> String {
+        //self.count1 += 1;
+        //format!("Hello world board {}!", self.count1).to_owned()
+        self.game.get_board().to_owned()
     }
 
-    async fn check_move(&self, _req: HttpRequest) -> HttpResponse {
-        let mut resp = HttpResponse::Ok()
-            .force_close() // <- Close connection on HttpResponseBuilder
-            .finish();
-
-        // Alternatively close connection on the HttpResponse struct
-        resp.head_mut()
-            .set_connection_type(http::ConnectionType::Close);
-
-        resp
+    pub fn check_move(&mut self, _potential_move:&Move) -> &'static str {
+        "Pass"
     }
+
+
+    // async fn check_move(&self, _req: HttpRequest) -> HttpResponse {
+    //     let mut resp = HttpResponse::Ok()
+    //         .force_close() // <- Close connection on HttpResponseBuilder
+    //         .finish();
+
+    //     // Alternatively close connection on the HttpResponse struct
+    //     resp.head_mut()
+    //         .set_connection_type(http::ConnectionType::Close);
+
+    //     resp
+    // }
 
     pub fn print_board(&self) {
         self.game.print_board();
