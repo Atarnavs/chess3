@@ -1,17 +1,20 @@
 mod piece;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
+#[derive(Deserialize)]
 pub struct Square {
     x:u8,
     y:u8,
 }
 
+#[derive(Deserialize)]
 pub struct Move {
     starting_square:Square,
     ending_square:Square,
     _piece_type:u8,
 }
+
 #[derive(Debug)]
 pub struct Game {
     number_of_half_moves:u8,
@@ -20,7 +23,7 @@ pub struct Game {
     side_move: bool,
     castling_availability: [bool; 4],
     board: [[u8; 8]; 8],
-    _history:Vec<String>,
+    history:Vec<String>,
 }
 
 impl Game {
@@ -166,7 +169,7 @@ impl Game {
             side_move: true,
             castling_availability: [false; 4],
             board: [[0; 8]; 8],
-            _history: vec![fen.clone()],
+            history: vec![fen.clone()],
         };
         println!("start 2");
 
@@ -185,8 +188,8 @@ impl Game {
         }
     }
 
-    pub fn get_board(&self) -> [[u8; 8]; 8] {
-        self.board
+    pub fn get_board(&self) -> String {
+        self.history.last().unwrap().to_string()
     }
 
 }
