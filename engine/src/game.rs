@@ -1,5 +1,5 @@
 mod piece;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -274,6 +274,18 @@ impl Game {
 
     pub fn get_board(&self) -> String {
         self.history.last().unwrap().to_string()
+    }
+    pub fn unmake_move(&mut self) {
+        self.history.pop();
+        self.fen_reader(self.history.last().unwrap().to_string());
+    }
+    pub fn check_move(&self, potential_move: &Move) -> String {
+        if self.rule_check(potential_move) {
+            "PASS".to_owned()
+        }
+        else {
+            "FAIL".to_owned()
+        }
     }
 
 }
