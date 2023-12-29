@@ -2,14 +2,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 
 public class Board extends JFrame{
+    private static final int EMPTY = 0;
+    private static final int KING = 1;
+    private static final int QUEEN = 2;
+    private static final int ROOK = 3;
+    private static final int BISHOP = 4;
+    private static final int KNIGHT = 5;
+    private static final int PAWN = 6;
+    private static final int WHITE = 16;
+    private static final int BLACK = 8;
     GameConnector position;
     private int clickCounter = 0;
-    private int xStart = 0;
-    private int yStart = 0;
-    private int xEnd = 0;
-    private int yEnd = 0;
     private int pawn = -1;
     private Move move = new Move();
     private char[][] board = {
@@ -37,8 +43,8 @@ public class Board extends JFrame{
     public static boolean ENGINE_DISABLED = false;
     private boolean engineEnabled;
     private int AUTOQUEEN = 0;
-    public int[] getMove() {
-        return new int[] {xStart, yStart, xEnd, yEnd};
+    public Move getMove() {
+        return move;
     }
 
     //Scanner scanner = new Scanner();
@@ -78,6 +84,7 @@ public class Board extends JFrame{
             bottomButtons[i].addActionListener(new bottomButtonsHandler());
             buttonPanel.add(bottomButtons[i]);
         }
+        //bottomButtons[0].setIcon(Icons.backArrow);
         for (int i = 0; i < 4; i++) {
             promotionChoices[i] = new JButton();
             promotionChoices[i].addActionListener(new PromotionButtonHandler());
@@ -117,9 +124,9 @@ public class Board extends JFrame{
             }
             System.out.println(this.engineEnabled);
             if (position.isEngineMove()) {
-                int[] move = position.returnEngineMove();
-                System.out.println(move[0] + " " + move[1] + " " + move[2] + " " + move[3] + " " + move[4]);
-                makeMove(move[0], move[1], move[2], move[3], move[4]);
+                Move move = position.returnEngineMove();
+                System.out.println(move.starting_square.x + " " + move.starting_square.y + " " + move.ending_square.x + " " + move.ending_square.y + " " + move.piece_type);
+                makeMove(move);
                 position.makeMove(move);
             }
         }
@@ -133,29 +140,27 @@ public class Board extends JFrame{
         FEN = position.getPieces();
         setPieces(FEN);
     }
-    public void makeMove (int xStart, int yStart, int xEnd, int yEnd, int pawn) {
-        boolean[] moveLegality = position.ruleCheck(xStart, yStart, xEnd, yEnd);
-
-        if (moveLegality[0]) {
-
-            if (moveLegality[1] && pawn == -1) {
+    public void makeMove (Move move) {
+        System.out.println(move.starting_square.x + " " + move.starting_square.y + " " + move.ending_square.x + " " + move.ending_square.y + " ");
+        String moveLegality = position.ruleCheck(move);
+        if (Objects.equals(moveLegality, "PASS")) {
+            //System.out.println("piece type is: " + move.piece_type);
+            //System.out.println("piece type & 7 is: " + (move.piece_type & 7));
+            if (((move.piece_type & 7) == 6) && (move.ending_square.y == 0 || move.ending_square.y == 7)) {
                 if (position.isSideMove()) {
-                    JOptionPane.showOptionDialog(chessBoard, "", "Chose pieces", JOptionPane.DEFAULT_OPTION, -1, Icons.whiteKing, promotionChoices, null);
+                    JOptionPane.showOptionDialog(chessBoard, "", "Chose a piece", JOptionPane.DEFAULT_OPTION, -1, Icons.whiteKing, promotionChoices, null);
                 }
                 else {
-                    JOptionPane.showOptionDialog(chessBoard, "", "Chose pieces", JOptionPane.DEFAULT_OPTION, -1, Icons.blackKing, promotionChoicesBlack, null);
+                    JOptionPane.showOptionDialog(chessBoard, "", "Chose a piece", JOptionPane.DEFAULT_OPTION, -1, Icons.blackKing, promotionChoicesBlack, null);
                 }
 
-            }
-            else {
-                this.pawn = pawn;
             }
             if (engineEnabled) {
                 if (!position.isEngineMove()) {
-                    position.makeMove(xStart, yStart, xEnd, yEnd, pawn);
+                    position.makeMove(move);
                 }
             }
-            position.makeMove(xStart, yStart, xEnd, yEnd, this.pawn);
+            position.makeMove(move);
             //position.updatePieceList();
             resetPieces();
         }
@@ -179,17 +184,14 @@ public class Board extends JFrame{
                         clickCounter = (clickCounter + 1) % 2;
                         System.out.println("clickCounter = " + clickCounter);
                         if (clickCounter == 1) {
-                            xStart = j;
                             move.starting_square.x = j;
-                            yStart = i;
                             move.starting_square.y = i;
                             if (board[i][j] == ' ') {clickCounter = 0;}
                         } else {
-                            xEnd = j;
                             move.ending_square.x = j;
-                            yEnd = i;
                             move.ending_square.y = i;
-                            makeMove(xStart, yStart, xEnd, yEnd, -1);
+                            move.piece_type = determineType(move.starting_square.x, move.starting_square.y);
+                            makeMove(move);
                             position.debugPrint();
 
                             return;
@@ -198,6 +200,24 @@ public class Board extends JFrame{
                 }
             }
         }
+    }
+    private int determineType(int x, int y) {
+        char piece = board[y][x];
+        int value = EMPTY;
+        if (piece == ' ') {return value;}
+        if (piece == 'K' || piece == 'k') {value += KING;}
+        else if (piece == 'Q' || piece == 'q') {value += QUEEN;}
+        else if (piece == 'R' || piece == 'r') {value += ROOK;}
+        else if (piece == 'B' || piece == 'b') {value += BISHOP;}
+        else if (piece == 'N' || piece == 'n') {value += KNIGHT;}
+        else if (piece == 'P' || piece == 'p') {value += PAWN;}
+        if (piece > 96 && piece < 123) {
+            value += BLACK;
+        }
+        else {
+            value += WHITE;
+        }
+        return value;
     }
     private class PromotionButtonHandler implements ActionListener {
         @Override
@@ -219,6 +239,7 @@ public class Board extends JFrame{
         }
     }
     private class bottomButtonsHandler implements ActionListener {
+        boolean counter = true;
         @Override
         public void actionPerformed(ActionEvent e) {
             if (e == null) {
@@ -228,6 +249,16 @@ public class Board extends JFrame{
             if (source == bottomButtons[0]) {
                 position.unmakeMove();
                 resetPieces();
+            }
+            if (source == bottomButtons[2]) {
+                if (counter) {
+                    setPiecesInReverse(FEN);
+                    counter = false;
+                }
+                else {
+                    setPieces(FEN);
+                    counter = true;
+                }
             }
             if (source == bottomButtons[3]) {
                 engineEnabled = false;
@@ -264,7 +295,38 @@ public class Board extends JFrame{
             }
         }
     }
+    private void setPiecesInReverse(String FEN) {
+        for (var i = 0; i < 8; i++) {
+            for (var j = 0; j < 8; j++) {
+                squares[i][j].setIcon(Icons.emptySquare);
+            }
+        }
+        System.out.println(FEN);
+        setBoard(FEN);
+        printBoard();
+        char piece;
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                piece = board[7 - y][7 - x];
+                if(piece == 'r') {squares[y][x].setIcon(Icons.blackRook);}
+                else if(piece == 'n') {squares[y][x].setIcon(Icons.blackKnight);}
+                else if(piece == 'b') {squares[y][x].setIcon(Icons.blackBishop);}
+                else if(piece == 'q') {squares[y][x].setIcon(Icons.blackQueen);}
+                else if(piece == 'k') {squares[y][x].setIcon(Icons.blackKing);}
+                else if(piece == 'p') {squares[y][x].setIcon(Icons.blackPawn);}
+                else if(piece == 'P') {squares[y][x].setIcon(Icons.whitePawn);}
+                else if(piece == 'K') {squares[y][x].setIcon(Icons.whiteKing);}
+                else if(piece == 'Q') {squares[y][x].setIcon(Icons.whiteQueen);}
+                else if(piece == 'B') {squares[y][x].setIcon(Icons.whiteBishop);}
+                else if(piece == 'N') {squares[y][x].setIcon(Icons.whiteKnight);}
+                else if(piece == 'R') {squares[y][x].setIcon(Icons.whiteRook);}
+
+
+            }
+        }
+    }
     private void setBoard(String FEN) {
+        setEmpty();
         int x = 0;
         int y = 7;
         for (char i: FEN.toCharArray()) {
@@ -289,5 +351,12 @@ public class Board extends JFrame{
         Board chessBoard = new Board(ENGINE_DISABLED); //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
+    }
+    private void setEmpty() {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = ' ';
+            }
+        }
     }
 }

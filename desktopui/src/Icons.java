@@ -14,4 +14,5 @@ public class Icons {
     static Icon whiteQueen = new ImageIcon("/Users/artem/Downloads/whiteQueenIcon.png");
     static Icon whiteKing = new ImageIcon("/Users/artem/Downloads/whiteKingIcon.png");
     static Icon emptySquare = new ImageIcon("/Users/artem/Downloads/emptySquare.png");
+    static Icon backArrow = new ImageIcon("/Users/artem/Downloads/back_arrow.png");
 }

@@ -3,6 +3,7 @@ import org.slf4j.LoggerFactory;
 import utils.http.HttpUtil;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class GameConnector {
     private static final Logger log = LoggerFactory.getLogger(GameConnector.class);
@@ -32,13 +33,33 @@ public class GameConnector {
     public GameConnector() {}
     public boolean isEngineMove() {return true;}
 
-    public int[] returnEngineMove() {
-        return new int[] {0,0,0,0,0};
+    public Move returnEngineMove() {
+        return new Move();
     }
-    public void makeMove(int[] move) {}
-    public void makeMove(int xStart, int yStart, int xEnd, int yEnd, int pawn) {}
-    public boolean[] ruleCheck(int xStart, int yStart, int xEnd, int yEnd) {
-        return new boolean[]{true, false};
+    public void makeMove(Move move) {
+        MakeMoveInfo info = new MakeMoveInfo();
+        info.username = "artem";
+        info.datax = move;
+
+        try {
+            var resp = HttpUtil.doPost(engineUrl + "/make_move", info);
+            log.info("got response: {}", resp.getBody());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public String ruleCheck(Move move) {
+        MakeMoveInfo info = new MakeMoveInfo();
+        info.username = "artem";
+        info.datax = move;
+
+        try {
+            var resp = HttpUtil.doPost(engineUrl + "/check_move", info);
+            log.info("got response: {}", resp.getBody());
+            return resp.getBody();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     public boolean isSideMove() {return true;}
 }

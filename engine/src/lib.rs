@@ -24,8 +24,14 @@ impl Application {
         self.game.get_board().to_owned()
     }
 
-    pub fn check_move(&mut self, _potential_move:&Move) -> &'static str {
-        "Pass"
+    pub fn check_move(&mut self, potential_move:&Move) -> &'static str {
+        let check = self.game.rule_check(potential_move);
+        if check {"PASS"}
+        else {"NOT"}
+    }
+
+    pub fn make_move(&mut self, move_to_make:&Move) {
+        self.game.make_move(move_to_make)
     }
 
 
@@ -51,3 +57,4 @@ impl Application {
 }
 
 pub mod game;
+pub mod info;
