@@ -1,5 +1,6 @@
 mod piece;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 #[derive(Deserialize)]
@@ -7,14 +8,27 @@ pub struct Square {
     x:u8,
     y:u8,
 }
+impl Square {
+    pub fn print_square(&self) {
+        println!("x is: {0}, y is {1}", self.x, self.y)
+    }
+}
 
 #[derive(Deserialize)]
 pub struct Move {
     starting_square:Square,
     ending_square:Square,
-    _piece_type:u8,
+    piece_type:u8,
 }
-
+impl Move {
+    pub fn print_move(&self) {
+        print!("starting square is: ");
+        self.starting_square.print_square();
+        print!("ending square is: ");
+        self.ending_square.print_square();
+        println!("piece type is: {0}", self.piece_type);
+    }
+}
 #[derive(Debug)]
 pub struct Game {
     number_of_half_moves:u8,
@@ -148,6 +162,7 @@ impl Game {
     }
 
     pub fn make_move(&mut self, piece_move: &Move) {
+        piece_move.print_move();
         let x_start:usize = piece_move.starting_square.x as usize;
         let y_start:usize = piece_move.starting_square.y as usize;
         let x_end:usize = piece_move.ending_square.x as usize;
@@ -155,6 +170,75 @@ impl Game {
         let piece = self.board[y_start][x_start];
         self.board[y_start][x_start] = piece::EMPTY;
         self.board[y_end][x_end] = piece;
+        self.history.push(self.make_fen());
+    }
+
+    fn make_fen(& self) -> String{
+        //self.print_board();
+        let pieces_map = HashMap::from([(piece::KING, 'k'), (piece::QUEEN, 'q'), 
+        (piece::ROOK, 'r'), (piece::BISHOP, 'b'), (piece::KNIGHT, 'n'), (piece::PAWN, 'p'), (piece::EMPTY, ' ')]);
+        let mut char_board = [[' '; 8]; 8];
+        let mut colour;
+        let mut piece;
+        let mut to_add;
+        let mut gaps = [0; 40];
+        let mut non_space_counter = 0;
+        let mut counter: isize = 0;
+        for i in 0..8 {
+            for j in 0..8 {
+                piece = self.board[7 - i][j];
+                colour = piece & 24;
+                to_add = *pieces_map.get(&(piece & 7)).expect("the hashmap has all the values");
+                if colour == 16 {
+                    to_add.make_ascii_uppercase();
+                }
+                char_board[i][j] = to_add;
+            }
+        }
+        print_char_board(&char_board);
+        let mut new_fen = String::new();
+        let mut new_fen_copy;
+        for i in char_board {
+            for j in i {
+                new_fen.push(j);
+            }
+            new_fen.push('/');
+        }
+        new_fen.pop();
+        new_fen_copy = new_fen.clone();
+        //println!("{new_fen}");
+        for c in new_fen.chars() {
+            //print!("{c}, ");
+            if c == ' ' {
+                gaps[non_space_counter] += 1;
+                new_fen_copy.replace_range((counter as usize)..(counter as usize) + 1, gaps[non_space_counter].to_string().as_str());
+                //println!("{new_fen_copy}");
+            }
+            else {
+                non_space_counter += 1;
+            }
+            counter += 1;
+        }
+        //println!();
+        new_fen = new_fen_copy.clone();
+        counter = 0;
+        non_space_counter = 0;
+        println!("{new_fen}");
+        for c in new_fen.chars() {
+            if c.is_ascii_digit() {
+                if (c as u8 - 48) < gaps[non_space_counter]  {
+                    new_fen_copy.replace_range((counter as usize)..(counter as usize) + 1, "");
+                    counter -= 1
+                }
+                //counter -= 1;
+            }
+            else if !c.is_ascii_digit() {
+                non_space_counter += 1;
+            }
+            counter += 1;
+        }
+        new_fen = new_fen_copy.clone();
+        new_fen
     }
 
     pub fn build(fen: String) -> Game{
@@ -192,4 +276,12 @@ impl Game {
         self.history.last().unwrap().to_string()
     }
 
+}
+pub fn print_char_board(array:&[[char; 8]; 8]) {
+    for i in array {
+        for c in i {
+            print!("{c}, ");
+        }
+        println!();
+    }
 }

@@ -3,13 +3,12 @@
 use serde::{Deserialize, Serialize};
 //use chess::game;
 
-
-
 use actix_web::{
     http::ConnectionType, middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer,
 };
 use chess::{game, game::Game, Application};
 use std::sync::{Arc, Mutex};
+use chess::info::{Responce, Info};
 
 
 
@@ -20,13 +19,8 @@ pub async fn get_board(req: HttpRequest, data: web::Data<Mutex<Application>>) ->
     data.lock().unwrap().get_board(req)
 }
 
-#[derive(Deserialize)]
-pub struct Info {
-    username: String,
-    datax: game::Move,
-}
 
-pub async fn make_move(body: web::Json<Info>, data: web::Data<Mutex<Application>>) -> String {
+pub async fn check_move(body: web::Json<Info>, data: web::Data<Mutex<Application>>) -> String {
     //req.
     println!("make move username: {0}", body.username);
     // ("ANS:" + body.username())
@@ -34,6 +28,10 @@ pub async fn make_move(body: web::Json<Info>, data: web::Data<Mutex<Application>
     data.lock().unwrap().check_move(potential_move).to_owned()
     //"MOVE Hello world board!".to_owned()
     // data.lock().unwrap().get_board(req).await
+}
+pub async fn make_move(body: web::Json<Info>, data: web::Data<Mutex<Application>>) -> String {
+    data.lock().unwrap().make_move(&body.datax);
+    "".to_owned()
 }
 
 
@@ -53,6 +51,7 @@ async fn main() -> std::io::Result<()> {
             .route("/", web::get().to(HttpResponse::Ok))
             .route("/get_board", web::get().to(get_board))
             .route("/make_move", web::post().to(make_move))
+            .route("/check_move", web::post().to(check_move))
             .wrap(Logger::default());
         app
     })
