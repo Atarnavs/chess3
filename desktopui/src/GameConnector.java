@@ -27,7 +27,17 @@ public class GameConnector {
             throw new RuntimeException(e);
         }
     }
-    public void unmakeMove() {}
+    public void unmakeMove() {
+        MakeMoveInfo info = new MakeMoveInfo();
+        info.username = "artem";
+
+        try {
+            var resp = HttpUtil.doPost(engineUrl + "/unmake_move", info);
+            log.info("got response: {}", resp.getBody());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void debugPrint() {}
     public GameConnector(String FEN) {}
     public GameConnector() {}

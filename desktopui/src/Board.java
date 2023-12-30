@@ -14,6 +14,7 @@ public class Board extends JFrame{
     private static final int PAWN = 6;
     private static final int WHITE = 16;
     private static final int BLACK = 8;
+    boolean whiteSide = true;
     GameConnector position;
     private int clickCounter = 0;
     private int pawn = -1;
@@ -183,18 +184,39 @@ public class Board extends JFrame{
                         System.out.print("x = " + j + " y = " + i + "\n");
                         clickCounter = (clickCounter + 1) % 2;
                         System.out.println("clickCounter = " + clickCounter);
-                        if (clickCounter == 1) {
-                            move.starting_square.x = j;
-                            move.starting_square.y = i;
-                            if (board[i][j] == ' ') {clickCounter = 0;}
-                        } else {
-                            move.ending_square.x = j;
-                            move.ending_square.y = i;
-                            move.piece_type = determineType(move.starting_square.x, move.starting_square.y);
-                            makeMove(move);
-                            position.debugPrint();
+                        if (whiteSide) {
+                            if (clickCounter == 1) {
+                                move.starting_square.x = j;
+                                move.starting_square.y = i;
+                                if (board[i][j] == ' ') {
+                                    clickCounter = 0;
+                                }
+                            } else {
+                                move.ending_square.x = j;
+                                move.ending_square.y = i;
+                                move.piece_type = determineType(move.starting_square.x, move.starting_square.y);
+                                makeMove(move);
+                                position.debugPrint();
 
-                            return;
+                                return;
+                            }
+                        }
+                        else {
+                            if (clickCounter == 1) {
+                                move.starting_square.x = 7 - j;
+                                move.starting_square.y = 7 - i;
+                                if (board[7 - i][7 - j] == ' ') {
+                                    clickCounter = 0;
+                                }
+                            } else {
+                                move.ending_square.x = 7 - j;
+                                move.ending_square.y = 7 - i;
+                                move.piece_type = determineType(move.starting_square.x, move.starting_square.y);
+                                makeMove(move);
+                                position.debugPrint();
+
+                                return;
+                            }
                         }
                     }
                 }
@@ -239,7 +261,6 @@ public class Board extends JFrame{
         }
     }
     private class bottomButtonsHandler implements ActionListener {
-        boolean counter = true;
         @Override
         public void actionPerformed(ActionEvent e) {
             if (e == null) {
@@ -251,13 +272,13 @@ public class Board extends JFrame{
                 resetPieces();
             }
             if (source == bottomButtons[2]) {
-                if (counter) {
+                if (whiteSide) {
                     setPiecesInReverse(FEN);
-                    counter = false;
+                    whiteSide = false;
                 }
                 else {
+                    whiteSide = true;
                     setPieces(FEN);
-                    counter = true;
                 }
             }
             if (source == bottomButtons[3]) {
@@ -266,6 +287,10 @@ public class Board extends JFrame{
         }
     }
     private void setPieces(String FEN) {
+        if (!whiteSide) {
+            setPiecesInReverse(FEN);
+            return;
+        }
         for (var i = 0; i < 8; i++) {
             for (var j = 0; j < 8; j++) {
                 squares[i][j].setIcon(Icons.emptySquare);
