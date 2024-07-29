@@ -351,7 +351,7 @@ public class Board extends JFrame{
         }
     }
     private void setBoard(String FEN) {
-        setEmpty();
+        setBoardEmpty();
         int x = 0;
         int y = 7;
         for (char i: FEN.toCharArray()) {
@@ -377,7 +377,7 @@ public class Board extends JFrame{
 
 
     }
-    private void setEmpty() {
+    private void setBoardEmpty() {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 board[i][j] = ' ';

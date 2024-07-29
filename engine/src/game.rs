@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 #[derive(Deserialize)]
+#[derive(PartialEq)]
 pub struct Square {
     x:u8,
     y:u8,
@@ -29,15 +30,18 @@ impl Move {
         println!("piece type is: {0}", self.piece_type);
     }
 }
+
+const NO_CASTLING:[bool; 4] = [false; 4];
 #[derive(Debug)]
 pub struct Game {
-    number_of_half_moves:u8,
+    number_of_half_moves:u16,
     number_of_moves:u16,
     enpassant_square: Square,
-    side_move: bool,
+    side_move: bool, // true - white
     castling_availability: [bool; 4],
     board: [[u8; 8]; 8],
     history:Vec<String>,
+    _positions: HashMap<u8, String>,
 }
 
 impl Game {
@@ -157,7 +161,15 @@ impl Game {
         }
     }
 
-    pub fn rule_check(&self, _piece_move: &Move) -> bool{
+    pub fn rule_check(&self, piece_move: &Move) -> bool{
+        if (piece_move.piece_type & piece::ALL_PIECES_TOGETHER) == piece::KNIGHT {
+            let distance = f32::sqrt(((piece_move.starting_square.x.abs_diff(piece_move.ending_square.x)).pow(2) + 
+            (piece_move.starting_square.y.abs_diff(piece_move.ending_square.y)).pow(2)) as f32);
+            if distance != f32::sqrt(5.0) {
+                return false;
+            }
+        }
+        
         true
     }
 
@@ -170,6 +182,19 @@ impl Game {
         let piece = self.board[y_start][x_start];
         self.board[y_start][x_start] = piece::EMPTY;
         self.board[y_end][x_end] = piece;
+        self.number_of_half_moves += 1;
+        if ((piece_move.piece_type & 7) == piece::PAWN) && (piece_move.ending_square.y.abs_diff(piece_move.ending_square.y) == 2){
+            if self.side_move {
+                self.enpassant_square = Square {x:piece_move.starting_square.x, y: piece_move.starting_square.y + 1};
+            }
+            else {
+                self.enpassant_square = Square {x:piece_move.starting_square.x, y: piece_move.starting_square.y - 1};
+            }
+        }
+        if !self.side_move {
+            self.number_of_moves += 1;
+        }
+        self.side_move = !self.side_move;
         self.history.push(self.make_fen());
     }
 
@@ -238,6 +263,43 @@ impl Game {
             counter += 1;
         }
         new_fen = new_fen_copy.clone();
+        new_fen.push(' ');
+        if self.side_move {
+            new_fen.push('w');
+        }
+        else {
+            new_fen.push('b');
+        }
+        new_fen.push(' ');
+        if self.castling_availability == NO_CASTLING {
+            new_fen.push('-');
+        }
+        else {
+            if self.castling_availability[0] {
+                new_fen.push('K');
+            }
+            if self.castling_availability[1] {
+                new_fen.push('Q');
+            }
+            if self.castling_availability[2] {
+                new_fen.push('k');
+            }
+            if self.castling_availability[3] {
+                new_fen.push('q');
+            }
+        }
+        new_fen.push(' ');
+        if self.enpassant_square != (Square {x:0,y:0,}) {
+            new_fen.push((self.enpassant_square.x + 97) as char);
+            new_fen.push((self.enpassant_square.x + 49) as char);
+        }
+        else {
+            new_fen.push('-');
+        }
+        new_fen.push(' ');
+        new_fen.push_str(self.number_of_half_moves.to_string().as_str());
+        new_fen.push(' ');
+        new_fen.push_str(self.number_of_moves.to_string().as_str());
         new_fen
     }
 
@@ -254,6 +316,7 @@ impl Game {
             castling_availability: [false; 4],
             board: [[0; 8]; 8],
             history: vec![fen.clone()],
+            _positions: HashMap::from([(0, Self::cut_of_fen(fen.clone()))])
         };
         println!("start 2");
 
@@ -262,7 +325,17 @@ impl Game {
 
         game
     }
-
+    fn cut_of_fen(mut fen: String) -> String {
+        let mut counter = 0;
+        for c in fen.chars() {
+            if c == ' ' {
+                break;
+            }
+            counter += 1;
+        }
+        fen.replace_range(counter..fen.len(), "");
+        fen
+    }
     pub fn print_board(&self) {
         for i in self.board.iter().rev() {
             for j in i {

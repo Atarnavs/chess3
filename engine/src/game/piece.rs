@@ -8,3 +8,5 @@ pub const PAWN:u8 = 6;
 
 pub const WHITE:u8 = 16;
 pub const BLACK:u8 = 8;
+
+pub const ALL_PIECES_TOGETHER:u8 = EMPTY + KING + QUEEN + ROOK + BISHOP + KNIGHT + PAWN;
